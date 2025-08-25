@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InvestBot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+        .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        label { display: block; margin: 8px 0 4px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        button { padding: 10px 14px; border: 0; background: #2563eb; color: #fff; border-radius: 6px; cursor: pointer; }
+        button.secondary { background: #29c888; padding: 2px;}
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e2e8f0; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        img { max-width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .notice { margin-top: 8px; padding: 10px; border-radius: 6px; display:none; }
+        .notice.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .notice.error { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; }
+    </style>
+    <script>const USER_ID = [[${userId}]];</script>
+</head>
+<body class="bg-slate-50">
+    <h1 class="text-2xl font-semibold mb-4">InvestBot</h1>
+
+    <div class="card bg-white shadow-sm">
+        <h2 class="text-lg font-medium mb-2">Record Transaction</h2>
+        <div class="row">
+            <div>
+                <label>Operation</label>
+                <select id="operation">
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                </select>
+            </div>
+            <div>
+                <label>Asset Type</label>
+                <select id="assetType">
+                    <option>DOLLAR</option>
+                    <option>EURO</option>
+                    <option>COIN</option>
+                    <option>HALF_COIN</option>
+                    <option>QUARTER_COIN</option>
+                    <option>CRYPTO</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label>Amount</label>
+                <input type="text" inputmode="decimal" id="amount" dir="ltr" />
+            </div>
+            <div>
+                <label>Date</label>
+                <input type="text" id="date-fa" class="pwt-datepicker-input" placeholder="YYYY/MM/DD HH:mm" />
+                <input type="hidden" id="date" />
+            </div>
+            <div>
+                <label>Currency</label>
+                <select id="currency">
+                    <option value="Dollar">Dollar</option>
+                    <option value="Toman" selected>Toman</option>
+                    <option value="Euro">Euro</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div>
+                <label>Total Cost (in selected currency)</label>
+                <input type="text" inputmode="decimal" id="price" placeholder="e.g. total paid" dir="ltr" required />
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:8px;">
+                <button onclick="submitTx()">Submit</button>
+                <button class="secondary" onclick="loadPortfolio()">Refresh Portfolio</button>
+            </div>
+        </div>
+        <div id="msg" class="notice"></div>
+    </div>
+
+    <div class="card bg-white shadow-sm">
+        <h2 class="text-lg font-medium mb-2">Portfolio</h2>
+        <table>
+            <thead>
+                <tr><th>Asset</th><th>Amount</th><th>Current Value (T)</th></tr>
+            </thead>
+            <tbody id="portfolioBody"></tbody>
+        </table>
+        <div style="margin-top:12px;">
+            <img id="chart" alt="Portfolio Chart" />
+        </div>
+        <div style="margin-top:12px;">
+            <button class="secondary" onclick="loadValuation()">Load Valuation</button>
+            <div id="valuation"></div>
+        </div>
+        <div style="margin-top:12px;">
+            <h3 class="text-md font-medium mb-1">Investments</h3>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+                <button class="secondary" onclick="loadInvestmentsPage('prev')">Prev</button>
+                <span id="pageInfo"></span>
+                <button class="secondary" onclick="loadInvestmentsPage('next')">Next</button>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Date</th><th>Type</th><th>Op</th><th>Amount</th><th>Currency</th><th>Total Cost</th></tr>
+                </thead>
+                <tbody id="investmentsBody"></tbody>
+            </table>
+        </div>
+        <div class="card bg-white shadow-sm mt-4">
+            <h3 class="text-md font-medium mb-1">Profit/Loss</h3>
+            <div class="row" style="margin-top:12px;">
+                <div>
+                    <label>Start Date</label>
+                    <input type="text" id="pnlStart-fa" class="pwt-datepicker-input" placeholder="YYYY/MM/DD HH:mm" />
+                    <input type="hidden" id="pnlStart" />
+                </div>
+                <div>
+                    <label>End Date</label>
+                    <input type="text" id="pnlEnd-fa" class="pwt-datepicker-input" placeholder="YYYY/MM/DD HH:mm" />
+                    <input type="hidden" id="pnlEnd" />
+                </div>
+            </div>
+            <div style="margin-top:8px;">
+                <button class="secondary" onclick="loadPnl()">Load P&amp;L</button>
+                <div id="pnl"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+<div></div>
+</html>
+
+
