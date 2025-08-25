@@ -6,7 +6,6 @@ A simple investment portfolio demo with REST endpoints, a basic UI, and H2 persi
 
 ```bash
 # Prereqs: Java 21, Gradle wrapper
-cd /Users/setayande/Documents/demo
 ./gradlew bootRun
 ```
 
