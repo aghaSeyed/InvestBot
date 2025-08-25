@@ -1,4 +1,4 @@
-# Demo (Spring Boot)
+# InvestBot (Spring Boot)
 
 A simple investment portfolio demo with REST endpoints, a basic UI, and H2 persistence.
 
