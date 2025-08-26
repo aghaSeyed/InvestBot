@@ -41,7 +41,7 @@ Base path: `/api`
     {
       "userId": 1,
       "type": "COIN",
-      "amount": 2.5,
+      "amount": 2,
       "currency": "IRR",
       "price": 45000000,
       "operationType": "BUY",
